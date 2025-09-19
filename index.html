@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CatFartGPT - OpenAI Chat Interface</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>CatFartGPT</h1>
+            <div class="api-key-section">
+                <input type="password" id="api-key" placeholder="Enter your OpenAI API key" />
+                <button id="save-key">Save Key</button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="chat-section">
+                <div class="chat-container">
+                    <div id="chat-messages" class="chat-messages">
+                        <div class="message system-message">
+                            <div class="message-content">
+                                Welcome to CatFartGPT! Enter your OpenAI API key above to start chatting.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-section">
+                        <div class="input-container">
+                            <textarea id="user-input" placeholder="Type your message here..." rows="1"></textarea>
+                            <button id="send-btn" disabled>
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M.5 1.163A1 1 0 0 1 1.97.28l12.868 6.837a1 1 0 0 1 0 1.766L1.969 15.72A1 1 0 0 1 .5 14.836V10.33a1 1 0 0 1 .816-.983L8.5 8 1.316 6.653A1 1 0 0 1 .5 5.67V1.163Z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="token-info">
+                            <span id="token-count">Tokens: 0</span>
+                            <span id="cost-estimate">Cost: $0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="image-section">
+                <div class="image-container">
+                    <h3>Token Usage Indicator</h3>
+                    <div id="token-image" class="token-image">
+                        <img id="usage-image" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='80' fill='%23e5e7eb' stroke='%236b7280' stroke-width='2'/%3E%3Ctext x='100' y='105' text-anchor='middle' font-family='Arial' font-size='14' fill='%236b7280'%3ENo Usage%3C/text%3E%3C/svg%3E" alt="No usage" />
+                    </div>
+
+                    <div class="fart-sounds-section">
+                        <h4>Custom Fart Sounds</h4>
+                        <div class="sound-uploads">
+                            <div class="sound-upload-item">
+                                <label for="low-fart">Low Usage Fart:</label>
+                                <input type="file" id="low-fart" accept=".wav" />
+                                <span id="low-fart-status">No file</span>
+                            </div>
+                            <div class="sound-upload-item">
+                                <label for="medium-fart">Medium Usage Fart:</label>
+                                <input type="file" id="medium-fart" accept=".wav" />
+                                <span id="medium-fart-status">No file</span>
+                            </div>
+                            <div class="sound-upload-item">
+                                <label for="high-fart">High Usage Fart:</label>
+                                <input type="file" id="high-fart" accept=".wav" />
+                                <span id="high-fart-status">No file</span>
+                            </div>
+                        </div>
+                        <button id="clear-sounds">Clear All Sounds</button>
+                    </div>
+
+                    <div class="custom-animations-section">
+                        <h4>Custom Animations</h4>
+                        <div class="animation-uploads">
+                            <div class="animation-upload-group">
+                                <h5>Low Usage Animation</h5>
+                                <div class="frame-uploads">
+                                    <div class="frame-upload-item">
+                                        <label for="low-frame1">Frame 1:</label>
+                                        <input type="file" id="low-frame1" accept="image/*" />
+                                        <span id="low-frame1-status">No file</span>
+                                    </div>
+                                    <div class="frame-upload-item">
+                                        <label for="low-frame2">Frame 2:</label>
+                                        <input type="file" id="low-frame2" accept="image/*" />
+                                        <span id="low-frame2-status">No file</span>
+                                    </div>
+                                    <div class="frame-upload-item">
+                                        <label for="low-frame3">Frame 3:</label>
+                                        <input type="file" id="low-frame3" accept="image/*" />
+                                        <span id="low-frame3-status">No file</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="animation-upload-group">
+                                <h5>Medium Usage Animation</h5>
+                                <div class="frame-uploads">
+                                    <div class="frame-upload-item">
+                                        <label for="medium-frame1">Frame 1:</label>
+                                        <input type="file" id="medium-frame1" accept="image/*" />
+                                        <span id="medium-frame1-status">No file</span>
+                                    </div>
+                                    <div class="frame-upload-item">
+                                        <label for="medium-frame2">Frame 2:</label>
+                                        <input type="file" id="medium-frame2" accept="image/*" />
+                                        <span id="medium-frame2-status">No file</span>
+                                    </div>
+                                    <div class="frame-upload-item">
+                                        <label for="medium-frame3">Frame 3:</label>
+                                        <input type="file" id="medium-frame3" accept="image/*" />
+                                        <span id="medium-frame3-status">No file</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="animation-upload-group">
+                                <h5>High Usage Animation</h5>
+                                <div class="frame-uploads">
+                                    <div class="frame-upload-item">
+                                        <label for="high-frame1">Frame 1:</label>
+                                        <input type="file" id="high-frame1" accept="image/*" />
+                                        <span id="high-frame1-status">No file</span>
+                                    </div>
+                                    <div class="frame-upload-item">
+                                        <label for="high-frame2">Frame 2:</label>
+                                        <input type="file" id="high-frame2" accept="image/*" />
+                                        <span id="high-frame2-status">No file</span>
+                                    </div>
+                                    <div class="frame-upload-item">
+                                        <label for="high-frame3">Frame 3:</label>
+                                        <input type="file" id="high-frame3" accept="image/*" />
+                                        <span id="high-frame3-status">No file</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button id="clear-animations">Clear All Animations</button>
+                    </div>
+
+                    <div class="usage-legend">
+                        <div class="legend-item">
+                            <div class="legend-color low"></div>
+                            <span>Low Usage (0-100 tokens)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color medium"></div>
+                            <span>Medium Usage (101-500 tokens)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color high"></div>
+                            <span>High Usage (500+ tokens)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading" class="loading hidden">
+        <div class="loading-spinner"></div>
+        <span>Thinking...</span>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
