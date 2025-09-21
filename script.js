@@ -2,7 +2,7 @@ class CatFartGPT {
     constructor() {
         this.apiKey = localStorage.getItem('openai-api-key') || '';
         this.messages = [];
-        this.totalTokens = 0;
+        this.totalTokens = parseInt(localStorage.getItem('total-tokens')) || 0;
         this.animationInterval = null;
         this.currentFrame = 0;
         this.customSounds = {
@@ -15,43 +15,64 @@ class CatFartGPT {
             medium: { frame1: null, frame2: null, frame3: null },
             high: { frame1: null, frame2: null, frame3: null }
         };
+        this.isSettingsPage = false;
         this.init();
     }
 
     init() {
+        this.loadSettings();
         this.bindEvents();
         this.updateUI();
-        if (this.apiKey) {
-            document.getElementById('api-key').value = this.apiKey;
-            this.enableChat();
+        if (!this.isSettingsPage && this.apiKey) {
+            document.getElementById('api-key')?.addEventListener('input', () => this.saveApiKey());
+            if (document.getElementById('api-key')) {
+                document.getElementById('api-key').value = this.apiKey;
+                this.enableChat();
+            }
         }
     }
 
     bindEvents() {
-        document.getElementById('save-key').addEventListener('click', () => this.saveApiKey());
-        document.getElementById('send-btn').addEventListener('click', () => this.sendMessage());
-        document.getElementById('user-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                this.sendMessage();
-            }
-        });
-        document.getElementById('user-input').addEventListener('input', () => this.adjustTextareaHeight());
-        document.getElementById('api-key').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.saveApiKey();
-            }
-        });
+        // Main page events
+        const saveKeyBtn = document.getElementById('save-key');
+        const sendBtn = document.getElementById('send-btn');
+        const userInput = document.getElementById('user-input');
+        const apiKey = document.getElementById('api-key');
 
-        // Sound upload events
-        document.getElementById('low-fart').addEventListener('change', (e) => this.handleSoundUpload(e, 'low'));
-        document.getElementById('medium-fart').addEventListener('change', (e) => this.handleSoundUpload(e, 'medium'));
-        document.getElementById('high-fart').addEventListener('change', (e) => this.handleSoundUpload(e, 'high'));
-        document.getElementById('clear-sounds').addEventListener('click', () => this.clearAllSounds());
+        if (saveKeyBtn) saveKeyBtn.addEventListener('click', () => this.saveApiKey());
+        if (sendBtn) sendBtn.addEventListener('click', () => this.sendMessage());
+        if (userInput) {
+            userInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    this.sendMessage();
+                }
+            });
+            userInput.addEventListener('input', () => this.adjustTextareaHeight());
+        }
+        if (apiKey) {
+            apiKey.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.saveApiKey();
+                }
+            });
+        }
+
+        // Settings page events
+        const lowFart = document.getElementById('low-fart');
+        const mediumFart = document.getElementById('medium-fart');
+        const highFart = document.getElementById('high-fart');
+        const clearSounds = document.getElementById('clear-sounds');
+        const clearAnimations = document.getElementById('clear-animations');
+
+        if (lowFart) lowFart.addEventListener('change', (e) => this.handleSoundUpload(e, 'low'));
+        if (mediumFart) mediumFart.addEventListener('change', (e) => this.handleSoundUpload(e, 'medium'));
+        if (highFart) highFart.addEventListener('change', (e) => this.handleSoundUpload(e, 'high'));
+        if (clearSounds) clearSounds.addEventListener('click', () => this.clearAllSounds());
+        if (clearAnimations) clearAnimations.addEventListener('click', () => this.clearAllAnimations());
 
         // Animation upload events
         this.bindAnimationUploadEvents();
-        document.getElementById('clear-animations').addEventListener('click', () => this.clearAllAnimations());
     }
 
     saveApiKey() {
@@ -158,14 +179,15 @@ class CatFartGPT {
         if (!usage) return;
 
         this.totalTokens += usage.total_tokens;
+        localStorage.setItem('total-tokens', this.totalTokens.toString());
 
         const tokenCountElement = document.getElementById('token-count');
         const costEstimateElement = document.getElementById('cost-estimate');
 
-        tokenCountElement.textContent = `Tokens: ${this.totalTokens}`;
+        if (tokenCountElement) tokenCountElement.textContent = `Tokens: ${this.totalTokens}`;
 
         const estimatedCost = (this.totalTokens / 1000) * 0.002;
-        costEstimateElement.textContent = `Cost: $${estimatedCost.toFixed(4)}`;
+        if (costEstimateElement) costEstimateElement.textContent = `Cost: $${estimatedCost.toFixed(4)}`;
 
         this.updateUsageImage();
     }
@@ -403,9 +425,10 @@ class CatFartGPT {
         this.customSounds[level] = fileURL;
 
         // Update status
-        const statusElement = document.getElementById(`${level}-fart-status`);
-        statusElement.textContent = file.name;
-        statusElement.style.color = '#10a37f';
+        this.updateSoundStatus(level, file.name);
+
+        // Save settings
+        this.saveSettings();
 
         // Test play the sound
         this.playCustomSound(level);
@@ -425,18 +448,29 @@ class CatFartGPT {
         };
 
         // Clear file inputs
-        document.getElementById('low-fart').value = '';
-        document.getElementById('medium-fart').value = '';
-        document.getElementById('high-fart').value = '';
+        const lowFart = document.getElementById('low-fart');
+        const mediumFart = document.getElementById('medium-fart');
+        const highFart = document.getElementById('high-fart');
+
+        if (lowFart) lowFart.value = '';
+        if (mediumFart) mediumFart.value = '';
+        if (highFart) highFart.value = '';
 
         // Update status displays
-        document.getElementById('low-fart-status').textContent = 'No file';
-        document.getElementById('medium-fart-status').textContent = 'No file';
-        document.getElementById('high-fart-status').textContent = 'No file';
+        this.updateSoundStatus('low', 'No file');
+        this.updateSoundStatus('medium', 'No file');
+        this.updateSoundStatus('high', 'No file');
 
-        document.getElementById('low-fart-status').style.color = '#8e8ea0';
-        document.getElementById('medium-fart-status').style.color = '#8e8ea0';
-        document.getElementById('high-fart-status').style.color = '#8e8ea0';
+        const lowStatus = document.getElementById('low-fart-status');
+        const mediumStatus = document.getElementById('medium-fart-status');
+        const highStatus = document.getElementById('high-fart-status');
+
+        if (lowStatus) lowStatus.style.color = '#8e8ea0';
+        if (mediumStatus) mediumStatus.style.color = '#8e8ea0';
+        if (highStatus) highStatus.style.color = '#8e8ea0';
+
+        // Save cleared settings
+        this.saveSettings();
     }
 
     bindAnimationUploadEvents() {
@@ -474,9 +508,10 @@ class CatFartGPT {
         this.customAnimations[level][frame] = fileURL;
 
         // Update status
-        const statusElement = document.getElementById(`${level}-${frame}-status`);
-        statusElement.textContent = file.name.substring(0, 8) + '...';
-        statusElement.style.color = '#10a37f';
+        this.updateAnimationStatus(level, frame, file.name.substring(0, 8) + '...');
+
+        // Save settings
+        this.saveSettings();
 
         // If this completes a full animation set, preview it
         if (this.hasCustomAnimation(level)) {
@@ -525,11 +560,14 @@ class CatFartGPT {
                 const inputElement = document.getElementById(`${level}-${frame}`);
                 const statusElement = document.getElementById(`${level}-${frame}-status`);
 
-                inputElement.value = '';
-                statusElement.textContent = 'No file';
-                statusElement.style.color = '#8e8ea0';
+                if (inputElement) inputElement.value = '';
+                this.updateAnimationStatus(level, frame, 'No file');
+                if (statusElement) statusElement.style.color = '#8e8ea0';
             });
         });
+
+        // Save cleared settings
+        this.saveSettings();
 
         // Restart current animation with generated frames
         const currentLevel = this.getCurrentUsageLevel();
@@ -549,6 +587,83 @@ class CatFartGPT {
 
     updateUI() {
         this.updateTokenCount();
+    }
+
+    loadSettings() {
+        // Load custom sounds from localStorage
+        const savedSounds = localStorage.getItem('custom-sounds');
+        if (savedSounds) {
+            try {
+                const sounds = JSON.parse(savedSounds);
+                Object.keys(sounds).forEach(level => {
+                    if (sounds[level]) {
+                        this.customSounds[level] = sounds[level];
+                        this.updateSoundStatus(level, 'Loaded from storage');
+                    }
+                });
+            } catch (e) {
+                console.log('Failed to load custom sounds from storage');
+            }
+        }
+
+        // Load custom animations from localStorage
+        const savedAnimations = localStorage.getItem('custom-animations');
+        if (savedAnimations) {
+            try {
+                const animations = JSON.parse(savedAnimations);
+                Object.keys(animations).forEach(level => {
+                    if (animations[level]) {
+                        Object.keys(animations[level]).forEach(frame => {
+                            if (animations[level][frame]) {
+                                this.customAnimations[level][frame] = animations[level][frame];
+                                this.updateAnimationStatus(level, frame, 'Loaded');
+                            }
+                        });
+                    }
+                });
+            } catch (e) {
+                console.log('Failed to load custom animations from storage');
+            }
+        }
+    }
+
+    saveSettings() {
+        // Save custom sounds to localStorage (as data URLs)
+        const soundsToSave = {};
+        Object.keys(this.customSounds).forEach(level => {
+            if (this.customSounds[level]) {
+                soundsToSave[level] = this.customSounds[level];
+            }
+        });
+        localStorage.setItem('custom-sounds', JSON.stringify(soundsToSave));
+
+        // Save custom animations to localStorage (as data URLs)
+        const animationsToSave = {};
+        Object.keys(this.customAnimations).forEach(level => {
+            animationsToSave[level] = {};
+            Object.keys(this.customAnimations[level]).forEach(frame => {
+                if (this.customAnimations[level][frame]) {
+                    animationsToSave[level][frame] = this.customAnimations[level][frame];
+                }
+            });
+        });
+        localStorage.setItem('custom-animations', JSON.stringify(animationsToSave));
+    }
+
+    updateSoundStatus(level, filename) {
+        const statusElement = document.getElementById(`${level}-fart-status`);
+        if (statusElement) {
+            statusElement.textContent = filename;
+            statusElement.style.color = '#10a37f';
+        }
+    }
+
+    updateAnimationStatus(level, frame, filename) {
+        const statusElement = document.getElementById(`${level}-${frame}-status`);
+        if (statusElement) {
+            statusElement.textContent = filename;
+            statusElement.style.color = '#10a37f';
+        }
     }
 }
 
