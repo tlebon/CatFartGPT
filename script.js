@@ -307,10 +307,10 @@ class CatFartGPT {
 
         // Use the new static images based on level
         const imageMap = {
-            'none': './0.webp',
-            'low': './1.jpeg',
-            'medium': './2.jpg',
-            'high': './3.gif'
+            'none': '0.webp',
+            'low': '1.jpeg',
+            'medium': '2.jpg',
+            'high': '3.gif'
         };
 
         if (imageMap[level]) {
