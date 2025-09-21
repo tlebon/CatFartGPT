@@ -90,10 +90,22 @@ header h1 {
 
 .main-content {
     flex: 1;
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     min-height: 0;
+    padding: 0 20px;
+}
+
+.main-content .chat-container {
+    width: 100%;
+    max-width: 800px;
+    height: 80vh;
+    background-color: #202123;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
 }
 
 .chat-section {
@@ -587,6 +599,70 @@ header h1 {
 
 .settings-button:hover {
     background-color: #0d8f6e;
+}
+
+/* API Key Settings Section */
+.api-key-settings-section {
+    margin-bottom: 20px;
+    padding: 20px;
+    background-color: #2a2b32;
+    border-radius: 8px;
+    width: 100%;
+}
+
+.api-key-settings-section h4 {
+    color: #10a37f;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.api-key-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.api-key-form label {
+    color: #d1d5db;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.api-key-form input {
+    padding: 12px 16px;
+    border: 1px solid #40414f;
+    border-radius: 8px;
+    background-color: #40414f;
+    color: #ffffff;
+    font-size: 14px;
+}
+
+.api-key-form input:focus {
+    outline: none;
+    border-color: #10a37f;
+}
+
+.api-key-form button {
+    padding: 12px 20px;
+    background-color: #10a37f;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    align-self: flex-start;
+}
+
+.api-key-form button:hover {
+    background-color: #0d8f6e;
+}
+
+.api-key-info {
+    font-size: 12px;
+    color: #8e8ea0;
+    font-style: italic;
+    margin-top: 5px;
 }
 
 @media (max-width: 1024px) {

@@ -23,12 +23,16 @@ class CatFartGPT {
         this.loadSettings();
         this.bindEvents();
         this.updateUI();
+
+        // Handle API key initialization on both pages
+        const apiKeyInput = document.getElementById('api-key');
+        if (apiKeyInput && this.apiKey) {
+            apiKeyInput.value = this.apiKey;
+        }
+
+        // Enable chat functionality on main page if API key exists
         if (!this.isSettingsPage && this.apiKey) {
-            document.getElementById('api-key')?.addEventListener('input', () => this.saveApiKey());
-            if (document.getElementById('api-key')) {
-                document.getElementById('api-key').value = this.apiKey;
-                this.enableChat();
-            }
+            this.enableChat();
         }
     }
 
@@ -76,21 +80,40 @@ class CatFartGPT {
     }
 
     saveApiKey() {
-        const apiKey = document.getElementById('api-key').value.trim();
+        const apiKeyInput = document.getElementById('api-key');
+        if (!apiKeyInput) return;
+
+        const apiKey = apiKeyInput.value.trim();
         if (!apiKey) {
             alert('Please enter a valid API key');
             return;
         }
 
+        // Basic validation for OpenAI API key format
+        if (!apiKey.startsWith('sk-') || apiKey.length < 20) {
+            alert('Please enter a valid OpenAI API key. It should start with "sk-" and be at least 20 characters long.');
+            return;
+        }
+
         this.apiKey = apiKey;
         localStorage.setItem('openai-api-key', apiKey);
-        this.enableChat();
-        this.addMessage('system', 'API key saved! You can now start chatting.');
+
+        // Enable chat on main page if we're not on settings page
+        if (!this.isSettingsPage) {
+            this.enableChat();
+            this.addMessage('system', 'API key saved! You can now start chatting.');
+        } else {
+            // Show success message on settings page
+            alert('API key saved successfully! You can now return to the chat.');
+        }
     }
 
     enableChat() {
-        document.getElementById('send-btn').disabled = false;
-        document.getElementById('user-input').placeholder = 'Type your message here...';
+        const sendBtn = document.getElementById('send-btn');
+        const userInput = document.getElementById('user-input');
+
+        if (sendBtn) sendBtn.disabled = false;
+        if (userInput) userInput.placeholder = 'Type your message here...';
     }
 
     adjustTextareaHeight() {
@@ -101,9 +124,16 @@ class CatFartGPT {
 
     async sendMessage() {
         const userInput = document.getElementById('user-input');
+        if (!userInput) return;
+
         const message = userInput.value.trim();
 
-        if (!message || !this.apiKey) return;
+        if (!message) return;
+
+        if (!this.apiKey) {
+            this.addMessage('system', 'Please configure your OpenAI API key in Settings before sending messages.');
+            return;
+        }
 
         userInput.value = '';
         userInput.style.height = 'auto';
@@ -116,46 +146,64 @@ class CatFartGPT {
             this.updateTokenCount(response.usage);
         } catch (error) {
             this.addMessage('system', `Error: ${error.message}`);
+            console.error('OpenAI API Error:', error);
         } finally {
             this.showLoading(false);
         }
     }
 
     async callOpenAI(message) {
-        this.messages.push({ role: 'user', content: message });
-
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${this.apiKey}`
-            },
-            body: JSON.stringify({
-                model: 'gpt-3.5-turbo',
-                messages: this.messages,
-                max_tokens: 1000,
-                temperature: 0.7
-            })
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error?.message || 'API request failed');
+        if (!this.apiKey) {
+            throw new Error('OpenAI API key not configured');
         }
 
-        const data = await response.json();
-        const assistantMessage = data.choices[0].message;
+        this.messages.push({ role: 'user', content: message });
 
-        this.messages.push(assistantMessage);
+        try {
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.apiKey.trim()}`
+                },
+                body: JSON.stringify({
+                    model: 'gpt-3.5-turbo',
+                    messages: this.messages,
+                    max_tokens: 1000,
+                    temperature: 0.7
+                })
+            });
 
-        return {
-            content: assistantMessage.content,
-            usage: data.usage
-        };
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => null);
+                const errorMessage = errorData?.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+                throw new Error(errorMessage);
+            }
+
+            const data = await response.json();
+
+            if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+                throw new Error('Invalid response format from OpenAI API');
+            }
+
+            const assistantMessage = data.choices[0].message;
+            this.messages.push(assistantMessage);
+
+            return {
+                content: assistantMessage.content,
+                usage: data.usage || { total_tokens: 0 }
+            };
+        } catch (error) {
+            // Remove the user message we added if the API call failed
+            this.messages.pop();
+            throw error;
+        }
     }
 
     addMessage(role, content) {
         const messagesContainer = document.getElementById('chat-messages');
+        if (!messagesContainer) return; // Return early if not on main page
+
         const messageDiv = document.createElement('div');
 
         messageDiv.className = `message ${role}-message`;
