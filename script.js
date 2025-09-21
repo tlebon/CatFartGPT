@@ -3,6 +3,7 @@ class CatFartGPT {
         this.apiKey = localStorage.getItem('openai-api-key') || '';
         this.messages = [];
         this.totalTokens = parseInt(localStorage.getItem('total-tokens')) || 0;
+        this.lastTokens = 0;
         this.animationInterval = null;
         this.currentFrame = 0;
         this.customSounds = {
@@ -231,17 +232,35 @@ class CatFartGPT {
 
     updateTokenCount(usage) {
         if (usage) {
+            this.lastTokens = usage.total_tokens;
             this.totalTokens += usage.total_tokens;
             localStorage.setItem('total-tokens', this.totalTokens.toString());
         }
 
+        const lastTokenCountElement = document.getElementById('last-token-count');
         const tokenCountElement = document.getElementById('token-count');
         const costEstimateElement = document.getElementById('cost-estimate');
+        const tokenInfoElement = document.querySelector('.token-info');
 
-        if (tokenCountElement) tokenCountElement.textContent = `Tokens: ${this.totalTokens}`;
+        if (lastTokenCountElement) lastTokenCountElement.textContent = `Last: ${this.lastTokens}`;
+        if (tokenCountElement) tokenCountElement.textContent = `Total: ${this.totalTokens}`;
 
         const estimatedCost = (this.totalTokens / 1000) * 0.002;
         if (costEstimateElement) costEstimateElement.textContent = `Cost: $${estimatedCost.toFixed(4)}`;
+
+        // Update color based on total tokens (more tokens = more green)
+        if (tokenInfoElement) {
+            const greenIntensity = Math.min(255, Math.floor(this.totalTokens / 20)); // Max out at 5100 tokens
+            const redBlue = Math.max(0, 142 - Math.floor(greenIntensity / 2)); // Decrease red/blue as green increases
+            const color = `rgb(${redBlue}, ${142 + Math.floor(greenIntensity / 2)}, ${redBlue})`;
+            tokenInfoElement.style.color = color;
+
+            // Add a subtle glow effect for high token counts
+            if (this.totalTokens > 2000) {
+                const glowIntensity = Math.min(10, (this.totalTokens - 2000) / 500);
+                tokenInfoElement.style.textShadow = `0 0 ${glowIntensity}px rgba(16, 163, 127, 0.5)`;
+            }
+        }
 
         this.updateUsageImage();
     }
@@ -250,23 +269,71 @@ class CatFartGPT {
         const usageImage = document.getElementById('usage-image');
         if (!usageImage) return; // Return if not on main page
 
-        if (this.totalTokens === 0) {
-            this.setUsageImage('none');
-        } else if (this.totalTokens <= 100) {
-            this.setUsageImage('low');
-        } else if (this.totalTokens <= 500) {
-            this.setUsageImage('medium');
+        const fartText = document.getElementById('fart-text');
+        let level = 'none';
+        let fartMessage = 'No Fart Yet...';
+
+        // Use last message tokens for the animation
+        if (this.lastTokens === 0) {
+            level = 'none';
+            fartMessage = 'No Fart Yet...';
+        } else if (this.lastTokens <= 200) {
+            level = 'low';
+            fartMessage = 'Small Fart!';
+        } else if (this.lastTokens <= 500) {
+            level = 'medium';
+            fartMessage = 'Medium Fart!!';
         } else {
-            this.setUsageImage('high');
+            level = 'high';
+            fartMessage = 'BIG FART!!!';
+        }
+
+        this.setUsageImage(level);
+
+        if (fartText) {
+            fartText.textContent = fartMessage;
+            fartText.className = `fart-text ${level}`;
         }
     }
 
     setUsageImage(level) {
         if (this.animationInterval) {
             clearInterval(this.animationInterval);
+            this.animationInterval = null;
         }
 
-        this.startMeowAnimation(level);
+        const usageImage = document.getElementById('usage-image');
+        if (!usageImage) return;
+
+        // Use the new static images based on level
+        const imageMap = {
+            'none': './0.webp',
+            'low': './1.jpeg',
+            'medium': './2.jpg',
+            'high': './3.gif'
+        };
+
+        if (imageMap[level]) {
+            usageImage.src = imageMap[level];
+            usageImage.alt = `${level} fart`;
+
+            // Remove any existing shake classes
+            usageImage.classList.remove('shake-low', 'shake-medium', 'shake-high');
+
+            // Add shake animation based on level
+            if (level === 'low') {
+                usageImage.classList.add('shake-low');
+            } else if (level === 'medium') {
+                usageImage.classList.add('shake-medium');
+            } else if (level === 'high') {
+                usageImage.classList.add('shake-high');
+            }
+
+            // Play sound for non-none levels
+            if (level !== 'none') {
+                this.playFartSound(level);
+            }
+        }
     }
 
     startMeowAnimation(level) {
@@ -297,12 +364,15 @@ class CatFartGPT {
 
         this.playFartSound(level);
 
+        // Stop animation after several seconds
+        let loopCount = 0;
         this.animationInterval = setInterval(() => {
             this.currentFrame = (this.currentFrame + 1) % frames.length;
             usageImage.src = frames[this.currentFrame];
 
-            if (this.currentFrame === 1) {
-                this.playFartSound(level);
+            loopCount++;
+            if (loopCount >= 10) { // 10 * 800ms = 8 seconds of animation
+                this.stopAnimation();
             }
         }, 800);
     }
@@ -327,12 +397,15 @@ class CatFartGPT {
 
         this.playFartSound(level);
 
+        // Stop animation after several seconds
+        let loopCount = 0;
         this.animationInterval = setInterval(() => {
             this.currentFrame = (this.currentFrame + 1) % frames.length;
             usageImage.src = frames[this.currentFrame];
 
-            if (this.currentFrame === 1) {
-                this.playFartSound(level);
+            loopCount++;
+            if (loopCount >= 10) { // 10 * 800ms = 8 seconds of animation
+                this.stopAnimation();
             }
         }, 800);
     }
@@ -535,9 +608,12 @@ class CatFartGPT {
         levels.forEach(level => {
             frames.forEach(frame => {
                 const elementId = `${level}-${frame}`;
-                document.getElementById(elementId).addEventListener('change', (e) =>
-                    this.handleAnimationUpload(e, level, frame)
-                );
+                const element = document.getElementById(elementId);
+                if (element) {
+                    element.addEventListener('change', (e) =>
+                        this.handleAnimationUpload(e, level, frame)
+                    );
+                }
             });
         });
     }
@@ -584,8 +660,8 @@ class CatFartGPT {
 
     getCurrentUsageLevel() {
         if (this.totalTokens === 0) return 'none';
-        else if (this.totalTokens <= 100) return 'low';
-        else if (this.totalTokens <= 500) return 'medium';
+        else if (this.totalTokens <= 500) return 'low';
+        else if (this.totalTokens <= 2000) return 'medium';
         else return 'high';
     }
 
@@ -642,6 +718,20 @@ class CatFartGPT {
 
     updateUI() {
         this.updateTokenCount();
+
+        // Initialize token info color on page load
+        const tokenInfoElement = document.querySelector('.token-info');
+        if (tokenInfoElement && this.totalTokens > 0) {
+            const greenIntensity = Math.min(255, Math.floor(this.totalTokens / 20));
+            const redBlue = Math.max(0, 142 - Math.floor(greenIntensity / 2));
+            const color = `rgb(${redBlue}, ${142 + Math.floor(greenIntensity / 2)}, ${redBlue})`;
+            tokenInfoElement.style.color = color;
+
+            if (this.totalTokens > 2000) {
+                const glowIntensity = Math.min(10, (this.totalTokens - 2000) / 500);
+                tokenInfoElement.style.textShadow = `0 0 ${glowIntensity}px rgba(16, 163, 127, 0.5)`;
+            }
+        }
     }
 
     loadSettings() {
