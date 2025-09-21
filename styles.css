@@ -90,22 +90,10 @@ header h1 {
 
 .main-content {
     flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
     min-height: 0;
-    padding: 0 20px;
-}
-
-.main-content .chat-container {
-    width: 100%;
-    max-width: 800px;
-    height: 80vh;
-    background-color: #202123;
-    border-radius: 12px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
 }
 
 .chat-section {

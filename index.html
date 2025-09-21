@@ -16,27 +16,53 @@
         </header>
 
         <div class="main-content">
-            <div class="chat-container">
-                <div id="chat-messages" class="chat-messages">
-                    <div class="message system-message">
-                        <div class="message-content">
-                            Welcome to CatFartGPT! Configure your OpenAI API key in Settings to start chatting.
+            <div class="chat-section">
+                <div class="chat-container">
+                    <div id="chat-messages" class="chat-messages">
+                        <div class="message system-message">
+                            <div class="message-content">
+                                Welcome to CatFartGPT! Configure your OpenAI API key in Settings to start chatting.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-section">
+                        <div class="input-container">
+                            <textarea id="user-input" placeholder="Type your message here..." rows="1"></textarea>
+                            <button id="send-btn" disabled>
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M.5 1.163A1 1 0 0 1 1.97.28l12.868 6.837a1 1 0 0 1 0 1.766L1.969 15.72A1 1 0 0 1 .5 14.836V10.33a1 1 0 0 1 .816-.983L8.5 8 1.316 6.653A1 1 0 0 1 .5 5.67V1.163Z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="token-info">
+                            <span id="token-count">Tokens: 0</span>
+                            <span id="cost-estimate">Cost: $0.00</span>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="input-section">
-                    <div class="input-container">
-                        <textarea id="user-input" placeholder="Type your message here..." rows="1"></textarea>
-                        <button id="send-btn" disabled>
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                <path d="M.5 1.163A1 1 0 0 1 1.97.28l12.868 6.837a1 1 0 0 1 0 1.766L1.969 15.72A1 1 0 0 1 .5 14.836V10.33a1 1 0 0 1 .816-.983L8.5 8 1.316 6.653A1 1 0 0 1 .5 5.67V1.163Z" fill="currentColor"/>
-                            </svg>
-                        </button>
+            <div class="image-section">
+                <div class="image-container">
+                    <h3>Token Usage Indicator</h3>
+                    <div id="token-image" class="token-image">
+                        <img id="usage-image" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='80' fill='%23e5e7eb' stroke='%236b7280' stroke-width='2'/%3E%3Ctext x='100' y='105' text-anchor='middle' font-family='Arial' font-size='14' fill='%236b7280'%3ENo Usage%3C/text%3E%3C/svg%3E" alt="No usage" />
                     </div>
-                    <div class="token-info">
-                        <span id="token-count">Tokens: 0</span>
-                        <span id="cost-estimate">Cost: $0.00</span>
+
+                    <div class="usage-legend">
+                        <div class="legend-item">
+                            <div class="legend-color low"></div>
+                            <span>Low Usage (0-100 tokens)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color medium"></div>
+                            <span>Medium Usage (101-500 tokens)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color high"></div>
+                            <span>High Usage (500+ tokens)</span>
+                        </div>
                     </div>
                 </div>
             </div>

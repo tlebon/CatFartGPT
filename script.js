@@ -6,9 +6,9 @@ class CatFartGPT {
         this.animationInterval = null;
         this.currentFrame = 0;
         this.customSounds = {
-            low: null,
-            medium: null,
-            high: null
+            low: './1-SmallFart.wav',
+            medium: './1-MediumFart.wav',
+            high: './1-LargeFart.wav'
         };
         this.customAnimations = {
             low: { frame1: null, frame2: null, frame3: null },
@@ -33,6 +33,12 @@ class CatFartGPT {
         // Enable chat functionality on main page if API key exists
         if (!this.isSettingsPage && this.apiKey) {
             this.enableChat();
+        }
+
+        // Initialize animation on main page
+        if (!this.isSettingsPage) {
+            // Trigger initial animation after a short delay to ensure DOM is ready
+            setTimeout(() => this.updateUsageImage(), 100);
         }
     }
 
@@ -224,10 +230,10 @@ class CatFartGPT {
     }
 
     updateTokenCount(usage) {
-        if (!usage) return;
-
-        this.totalTokens += usage.total_tokens;
-        localStorage.setItem('total-tokens', this.totalTokens.toString());
+        if (usage) {
+            this.totalTokens += usage.total_tokens;
+            localStorage.setItem('total-tokens', this.totalTokens.toString());
+        }
 
         const tokenCountElement = document.getElementById('token-count');
         const costEstimateElement = document.getElementById('cost-estimate');
@@ -242,6 +248,7 @@ class CatFartGPT {
 
     updateUsageImage() {
         const usageImage = document.getElementById('usage-image');
+        if (!usageImage) return; // Return if not on main page
 
         if (this.totalTokens === 0) {
             this.setUsageImage('none');
@@ -483,16 +490,16 @@ class CatFartGPT {
     }
 
     clearAllSounds() {
-        // Revoke object URLs to free memory
+        // Revoke object URLs to free memory (only for blob URLs, not file paths)
         Object.values(this.customSounds).forEach(url => {
-            if (url) URL.revokeObjectURL(url);
+            if (url && url.startsWith('blob:')) URL.revokeObjectURL(url);
         });
 
-        // Reset sounds
+        // Reset sounds to default WAV files
         this.customSounds = {
-            low: null,
-            medium: null,
-            high: null
+            low: './1-SmallFart.wav',
+            medium: './1-MediumFart.wav',
+            high: './1-LargeFart.wav'
         };
 
         // Clear file inputs
@@ -638,13 +645,14 @@ class CatFartGPT {
     }
 
     loadSettings() {
-        // Load custom sounds from localStorage
+        // Load custom sounds from localStorage (only if they exist and are different from defaults)
         const savedSounds = localStorage.getItem('custom-sounds');
         if (savedSounds) {
             try {
                 const sounds = JSON.parse(savedSounds);
                 Object.keys(sounds).forEach(level => {
-                    if (sounds[level]) {
+                    if (sounds[level] && !sounds[level].includes('.wav')) {
+                        // Only load if it's a custom uploaded sound (blob URL), not our default WAV files
                         this.customSounds[level] = sounds[level];
                         this.updateSoundStatus(level, 'Loaded from storage');
                     }
@@ -713,8 +721,14 @@ class CatFartGPT {
             statusElement.style.color = '#10a37f';
         }
     }
+
+    // Test function to manually trigger animations (for debugging)
+    testAnimation(level = 'low') {
+        console.log(`Testing ${level} animation...`);
+        this.setUsageImage(level);
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    new CatFartGPT();
+    window.catFartGPT = new CatFartGPT();
 });
